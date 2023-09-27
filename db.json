@@ -1,0 +1,22 @@
+{
+    "id": 1,
+    "nom": "Doe",
+    "prénom": "John",
+    "âge": 30,
+    "adresse": {
+      "rue": "123 Main Street",
+      "ville": "Villeville",
+      "code_postal": "12345"
+    },
+    "contacts": [
+      {
+        "type": "email",
+        "valeur": "john.doe@example.com"
+      },
+      {
+        "type": "téléphone",
+        "valeur": "+1 (555) 123-4567"
+      }
+    ]
+  }
+  
