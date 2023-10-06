@@ -1,11 +1,9 @@
-type Person = {
+export type Person = {
     id: number;
     name: string;
     surname: string;
 }
 
-type Data = {
+export type Data = {
     persons: Person[];
 }
-
-export { Person, Data };

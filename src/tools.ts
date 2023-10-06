@@ -1,6 +1,6 @@
 import { Person } from './types';
 
-function getMaxId(persons: Person[]) {
+export function getMaxId(persons: Person[]) {
     let maxId = 0;
     persons.forEach((person: Person) => {
         if (person.id > maxId) {
@@ -10,4 +10,9 @@ function getMaxId(persons: Person[]) {
     return maxId;
 }
 
-export default {getMaxId};
+export function printHello() {
+    console.log("Hello World!");
+
+}
+
+

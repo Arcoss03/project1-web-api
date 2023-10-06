@@ -3,9 +3,7 @@ import { Low } from 'lowdb'
 import { JSONFile } from 'lowdb/node'
 import { Person } from './types'
 import { Data } from './types'
-import {getMaxId} from './tools'
-
-
+import { getMaxId } from './tools'
 const adapter = new JSONFile<Data>('./db.json')
 const defaultData: Data = { persons:[] }
 const db = new Low(adapter, defaultData)
@@ -54,7 +52,7 @@ app.get('/person/:id', async (req: any, res: any) => {
 app.post('/person', async (req: any, res: any) => {
     try {
         await db.read();
-        const nextId:number = getMaxId(db.data.persons) + 1;
+        const nextId:number = getMaxId(db.data.persons) + 1
         console.log(req.body.name)
         const newPerson:Person = {
             id: nextId,
