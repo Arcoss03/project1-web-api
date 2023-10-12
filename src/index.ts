@@ -84,6 +84,66 @@ app.post('/person', async (req: any, res: any) => {
     }
 });
 
+// Mise à jour d'une personne (route PUT)
+app.put('/person/:id', async (req: any, res: any) => {
+    try {
+        const id = parseInt(req.params.id); // Récupérer l'ID de la personne à mettre à jour
+        await db.read();
+        
+        // Vérifier si la personne avec l'ID spécifié existe
+        const personIndex = db.data.persons.findIndex((person: Person) => person.id === id);
+        
+        if (personIndex === -1) {
+            // Si la personne n'existe pas, renvoyez une réponse 404
+            res.status(404).json({ error: 'Utilisateur non trouvé.' });
+            return;
+        }
+
+        // Vérification que name et surname ne sont pas vides (vous pouvez personnaliser la validation)
+        if (!req.body.name || !req.body.surname) {
+            res.status(400).json({ error: 'Les champs "name" et "surname" sont requis.' });
+            return;
+        }
+
+        // Mettre à jour les données de la personne
+        db.data.persons[personIndex].name = req.body.name;
+        db.data.persons[personIndex].surname = req.body.surname;
+        await db.write();
+
+        res.json({ message: 'Personne mise à jour avec succès', updatedPerson: db.data.persons[personIndex] });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Erreur lors de la récupération des données', req: req.body });
+    }
+});
+
+// Suppression d'une personne (route DELETE)
+app.delete('/person/:id', async (req: any, res: any) => {
+    try {
+        const id = parseInt(req.params.id); // Récupérer l'ID de la personne à supprimer
+        await db.read();
+
+        // Trouver l'index de la personne à supprimer
+        const personIndex = db.data.persons.findIndex((person: Person) => person.id === id);
+
+        if (personIndex === -1) {
+            // Si la personne n'existe pas, renvoyez une réponse 404
+            res.status(404).json({ error: 'Utilisateur non trouvé.' });
+            return;
+        }
+
+        // Supprimer la personne de la liste
+        db.data.persons.splice(personIndex, 1);
+        await db.write();
+
+        res.json({ message: 'Personne supprimée avec succès' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Erreur lors de la récupération des données' });
+    }
+});
+
+
 
 
 
@@ -91,3 +151,4 @@ app.post('/person', async (req: any, res: any) => {
 app.listen(port, hostname, function() {
     console.log(`Server running at http://${hostname}:${port}/`);
 });
+
