@@ -40,7 +40,15 @@ app.get('/person/:id', async (req: any, res: any) => {
     try {
         const id = parseInt(req.params.id); // Récupérer l'ID à partir de l'URL et le convertir en nombre
         await db.read();
-        res.json(db.data.persons.find((person:Person) => person.id === id));
+        const person = db.data.persons.find((person: Person) => person.id === id);
+
+        if (person) {
+            // Si l'utilisateur existe, renvoyez ses données
+            res.json(person);
+        } else {
+            // Si l'utilisateur n'existe pas, renvoyez une réponse 404
+            res.status(404).json({ error: 'Utilisateur non trouvé.' });
+        }
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Erreur lors de la récupération des données.' });
@@ -52,21 +60,30 @@ app.get('/person/:id', async (req: any, res: any) => {
 app.post('/person', async (req: any, res: any) => {
     try {
         await db.read();
-        const nextId:number = getMaxId(db.data.persons) + 1
-        console.log(req.body.name)
-        const newPerson:Person = {
+
+        // Vérification que name et surname ne sont pas vides
+        if (!req.body.name || !req.body.surname) {
+            res.status(400).json({ error: 'Les champs "name" et "surname" sont requis.' });
+            return; // Sortir de la fonction en cas de données manquantes
+        }
+
+        const nextId: number = getMaxId(db.data.persons) + 1;
+
+        const newPerson: Person = {
             id: nextId,
             name: req.body.name,
-            surname: req.body.surname
-        }
+            surname: req.body.surname,
+        };
+
         db.data.persons.push(newPerson);
         await db.write();
-        res.json("Personne ajoutée");
+        res.json({"Personne ajoutée":newPerson});
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: 'Erreur lors de la récupération des données', req:req.body });
+        res.status(500).json({ error: 'Erreur lors de la récupération des données', req: req.body });
     }
 });
+
 
 
 
