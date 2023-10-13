@@ -1,29 +1,26 @@
 {
-  "name": "webapi",
-  "version": "1.0.0",
-  "description": "Ce projet est un test de npm",
-  "exports": "./build/index.js",
+  "name": "mini-api-person",
   "type": "module",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
   "scripts": {
-    "dev": "npx nodemon",
-    "startb": "node build/index.js",
-    "start": "npm run dev",
-    "build": "tsc -outDir build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "ts-node src/index.ts",
+    "dev": "nodemon src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "express": "^4.18.2",
     "lowdb": "^6.0.1",
+    "ts-node": "^10.9.1",
     "yup": "^1.3.2"
   },
   "devDependencies": {
     "@types/express": "^4.17.18",
-    "@types/node": "^20.8.2",
-    "esm": "^3.2.25",
-    "nodemon": "^3.0.1",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.2.2"
+    "@types/lowdb": "^1.0.12",
+    "nodemon": "^3.0.1"
   }
 }

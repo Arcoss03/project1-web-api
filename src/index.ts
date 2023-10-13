@@ -1,161 +1,116 @@
-import express from "express";
-import { Low } from "lowdb";
-import { JSONFile } from "lowdb/node";
-import { Person } from "./types";
-import { Data } from "./types";
-import { getMaxId } from "./tools";
-import { ValidationError } from "yup";
-import { PersonSchema } from "./schemas";
+import Express, { NextFunction, Request, Response } from 'express'
+import { ValidationError } from 'yup';
 
-const adapter = new JSONFile<Data>("./db.json");
-const defaultData: Data = { persons: [] };
-const db = new Low(adapter, defaultData);
+import { createPersonSchema, updatePersonSchema } from './validation'
+import db from './db'
 
-const app: express.Application = express();
-app.use(express.json());
+const app = Express()
 
-const hostname = "127.0.0.1";
-const port = 3000;
+app.use(Express.json())
 
-app.get("/", function (req: any, res: any) {
-  res.send("Hello World!");
-});
+// Get all persons
+app.get('/persons', async (req, res) => {
+  // Load data from db.json into db.data
+  await db.read()
 
-// route GET
+  res.json(db.data.persons)
+})
 
-app.get("/person", async (req: any, res: any) => {
-  try {
-    await db.read();
-    res.json(db.data.persons);
-  } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ error: "Erreur lors de la récupération des données." });
+// 1. 
+// GET /persons/:id
+// Get person by id from DB
+app.get('/persons/:id', async (req, res) => {
+  const id = parseInt(req.params.id)
+
+  // Load data from db.json into db.data
+  await db.read()
+  const person = db.data.persons.find(person => person.id === id)
+
+  if (!person) {
+    res.sendStatus(404)
+    return
   }
-});
 
-app.get("/person/:id", async (req: any, res: any) => {
+  res.json(person)
+})
+
+const validateSchema = (schema: any) => async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const id = parseInt(req.params.id); // get ID from URL and convert string to number
-    const person = db.data.persons.find((person: Person) => person.id === id);
-
-    if (person) {
-    } else {
-      res.status(404).json({ error: "Utilisateur non trouvé." });
-    }
-  } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ error: "Erreur lors de la récupération des données." });
-  }
-});
-
-//route POST
-
-app.post("/person", async (req: any, res: any) => {
-  try {
-    await db.read();
-    const nextId: number = getMaxId(db.data.persons) + 1;
-    const validatedData = await PersonSchema.validate(req.body, {
-      stripUnknown: true,
-      abortEarly: false,
-    });
-
-    const newPerson = { id: nextId, ...validatedData }; // add new  persone to the list
-    db.data.persons.push(newPerson);
-    await db.write();
-
-    res.json({ "Personne ajoutée": newPerson });
+    await schema.validate(req.body, {abortEarly: false});
+    next();
   } catch (error) {
     if (error instanceof ValidationError) {
-      res
-        .status(400)
-        .json({ error: "Validation a échoué", details: error.errors });
-    } else {
-      console.error(error);
-      res.status(500).json({
-        error: "Erreur lors de la récupération des données",
-        req: req.body,
-      });
+      console.log(error.errors);
+      res.status(400).json({message: error.errors})
     }
   }
-});
+}
 
-// route PUT
-app.put("/person/:id", async (req: any, res: any) => {
-  try {
-    const id = parseInt(req.params.id);
-    await db.read();
+// 2. 
+// POST /persons with body { firstName: string, lastName: string }
+// Add a new person in DB
+app.post('/persons', validateSchema(createPersonSchema), async (req, res) => {
+  const person = req.body    
+  
+  // Load data from db.json into db.data
+  await db.read()
 
-    const personIndex = db.data.persons.findIndex(
-      (person: Person) => person.id === id
-    );
+  const lastCreatedPerson = db.data.persons[db.data.persons.length - 1]
+  const id = lastCreatedPerson ? lastCreatedPerson.id + 1 : 1
 
-    if (personIndex === -1) {
-      res.status(404).json({ error: "Utilisateur non trouvé." });
-      return;
-    }
+  db.data.persons.push({ id, ...person })
 
-    const updatedPerson = {
-      id,
-      name: req.body.name,
-      surname: req.body.surname,
-      email: req.body.email,
-    };
+  // Save data from db.data to db.json file
+  await db.write()
 
-    await PersonSchema.validate(updatedPerson, {
-      stripUnknown: true,
-      abortEarly: false,
-    });
+  res.json({ id })
+})
 
-    db.data.persons[personIndex] = updatedPerson;
-    await db.write();
+// 3.
+// PATCH /persons/:id with body { firstName: string, lastName: string }
+// Update a person in DB
+app.patch('/persons/:id', validateSchema(updatePersonSchema), async (req: Request, res: Response) => {
+  const id = parseInt(req.params.id)
+  const person = req.body
 
-    res.json({ message: "Personne mise à jour avec succès", updatedPerson });
-  } catch (error) {
-    if (error instanceof ValidationError) {
-      res
-        .status(400)
-        .json({ error: "Validation a échoué", details: error.errors });
-    } else {
-      console.error(error);
-      res.status(500).json({
-        error: "Erreur lors de la récupération des données",
-        req: req.body,
-      });
-    }
+  // Load data from db.json into db.data
+  await db.read()
+
+  const personIndex = db.data.persons.findIndex(person => person.id === id)
+  if (personIndex === -1) {
+    res.sendStatus(404)
+    return
   }
-});
 
-// route DELETE
-app.delete("/person/:id", async (req: any, res: any) => {
-  try {
-    const id = parseInt(req.params.id);
-    await db.read();
+  db.data.persons[personIndex] = { ...db.data.persons[personIndex], ...person }
 
-    const personIndex = db.data.persons.findIndex(
-      (person: Person) => person.id === id
-    );
+  // Save data from db.data to db.json file
+  await db.write()
 
-    if (personIndex === -1) {
-      res.status(404).json({ error: "Utilisateur non trouvé." });
-      return;
-    }
+  res.sendStatus(204)
+})
 
-    db.data.persons.splice(personIndex, 1);
-    await db.write();
+// 4. Qu'est-ce qu'une API REST ?
+// En 2-3 slides que faut-il retenir ?
+// Quelle association entre les verbes HTTP et les opérations CRUD ?
+// Comment nommer les routes ? Singulier ou pluriel ? Majuscule ou minuscule ?
+// Comment documenter une API REST ? Un package NPM ? Un site web ? Autre ? Avec Express ?
 
-    res.json({ message: "Personne supprimée avec succès" });
-  } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ error: "Erreur lors de la récupération des données" });
+app.delete('/persons/:id', async (req, res) => {
+  const id = parseInt(req.params.id)
+  await db.read()
+
+  const personIndex = db.data.persons.findIndex(person => person.id === id)
+  if (personIndex === -1) {
+    res.sendStatus(404)
+    return
   }
-});
 
-app.listen(port, hostname, function () {
-  console.log(`Server running at http://${hostname}:${port}/`);
-});
+  db.data.persons.splice(personIndex, 1)
+  await db.write()
+  res.sendStatus(204)
+})
+
+app.listen(3000, () => {
+  console.log('Server listening on http://localhost:3000')
+})

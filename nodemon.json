@@ -1,6 +1,4 @@
 {
-    "watch": ["src"],
-    "ext": "ts",
-    "exec": "ts-node src/index.ts"
+  "verbose": true,
+  "ignore": ["node_modules", "db.json"]
 }
-  

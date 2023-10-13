@@ -1,11 +1,11 @@
-export type Person = {
-  id: number;
-  name: string;
-  surname: string;
-  email: string;
-};
+type Person = {
+  id: number,
+  firstName: string
+  lastName: string
+}
 
-export type Data = {
-  persons: Person[];
-};
+type Data = {
+  persons: Person[]
+}
 
+export { Person, Data }
