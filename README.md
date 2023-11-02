@@ -7,3 +7,6 @@ run the project:
 
 build the project: 
 ```npm run build ```
+
+run the project in production mode:
+```npm run start:prod ```
