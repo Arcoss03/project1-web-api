@@ -1,6 +1,8 @@
 # Project web API with lowdb
 ### Author: FRIN Arthur ESGI student
 
+# my bautiful API
+
 run the project:
 
 ``` npm start ``` or ``` npm run dev ```
